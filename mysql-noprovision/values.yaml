@@ -68,7 +68,7 @@ extraInitContainers: |
 
 ## Node selector
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
-nodeSelector: {}
+nodeSelector: k8s-node-2
   # kubernetes.io/hostname: k8s-node-2
 
 ## Affinity
