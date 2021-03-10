@@ -2,11 +2,11 @@
 ## Please, note that this will override the image parameters, including dependencies, configured to use the global value
 ## Current available global Docker image parameters: imageRegistry and imagePullSecrets
 ##
-# global:
+global:
 #   imageRegistry: myRegistryName
 #   imagePullSecrets:
 #     - myRegistryKeySecretName
-#   storageClass: myStorageClass
+  storageClass: local-storage
 
 ## Bitnami MariaDB image
 ## ref: https://hub.docker.com/r/bitnami/mariadb/tags/
@@ -34,7 +34,7 @@ image:
 
 ## String to partially override mariadb.fullname template (will maintain the release name)
 ##
-# nameOverride:
+nameOverride: "mariadb"
 
 ## String to fully override mariadb.fullname template
 ##
@@ -144,6 +144,7 @@ primary:
     log-error=/opt/bitnami/mariadb/logs/mysqld.log
     character-set-server=UTF8
     collation-server=utf8_general_ci
+    plugin-load-add=auth_socket.so
 
     [client]
     port=3306
@@ -196,19 +197,20 @@ primary:
     ## Node affinity type
     ## Allowed values: soft, hard
     ##
-    type: ""
+    type: "soft"
     ## Node label key to match
     ## E.g.
     ## key: "kubernetes.io/e2e-az-name"
     ##
-    key: ""
+    key: "app.kubernetes.io/name"
     ## Node label values to match
     ## E.g.
     ## values:
     ##   - e2e-az1
     ##   - e2e-az2
     ##
-    values: []
+    values:
+      - mariadb
 
   ## Affinity for MariaDB primary pods assignment
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
@@ -253,12 +255,12 @@ primary:
     # choice for the user. This also increases chances charts run on environments with little
     # resources, such as Minikube. If you do want to specify resources, uncomment the following
     # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-    limits: {}
-    #   memory: 256Mi
-    #   cpu: 100m
-    requests: {}
-    #   memory: 256Mi
-    #   cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 100m
+    requests:
+      memory: 256Mi
+      cpu: 100m
 
   ## MariaDB primary container's liveness and readiness probes
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
@@ -329,7 +331,7 @@ primary:
     ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
     ##   GKE, AWS & OpenStack)
     ##
-    # storageClass: "-"
+    storageClass: local-storage
     ## Persistent Volume Claim annotations
     ##
     annotations: {}
@@ -339,13 +341,15 @@ primary:
       - ReadWriteOnce
     ## Persistent Volume size
     ##
-    size: 8Gi
+    size: 10Gi
     ## selector can be used to match an existing PersistentVolume
     ## selector:
     ##   matchLabels:
     ##     app: my-app
     ##
     selector: {}
+    #   matchLabels:
+    #     app: mariadb
 
   ## Extra volumes to add to the MariaDB Primary pod(s)
   ##
@@ -358,6 +362,17 @@ primary:
   ## Extra init containers to add to the MariaDB Primary pod(s)
   ##
   initContainers: []
+  # - name: mariadb-create-directory-structure
+  #   image: busybox
+  #   command:
+  #     [
+  #       "sh",
+  #       "-c",
+  #       "/bin/mkdir -p /bitnami/mariadb/data && /bin/chmod -R 777 /bitnami/mariadb",
+  #     ]
+  #   volumeMounts:
+  #     - name: mariadb-data
+  #       mountPath: /bitnami
 
   ## Extra sidecar containers to add to the MariaDB Primary pod(s)
   ##
@@ -379,7 +394,7 @@ primary:
     ## Service clusterIP
     ##
     # clusterIP: None
-    clusterIP: ""
+    clusterIP: None
     ## Set the LoadBalancer service type to internal only.
     ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer
     ##
@@ -621,7 +636,7 @@ secondary:
     ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
     ##   GKE, AWS & OpenStack)
     ##
-    # storageClass: "-"
+    storageClass: local-storage
     ## Persistent Volume Claim annotations
     ##
     annotations: {}
@@ -633,10 +648,6 @@ secondary:
     ##
     size: 8Gi
     ## selector can be used to match an existing PersistentVolume
-    ## selector:
-    ##   matchLabels:
-    ##     app: my-app
-    ##
     selector: {}
 
   ## Extra volumes to add to the MariaDB Secondary pod(s)
@@ -726,7 +737,7 @@ rbac:
 ## volumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section.
 ##
 volumePermissions:
-  enabled: false
+  enabled: true
   image:
     registry: docker.io
     repository: bitnami/bitnami-shell
