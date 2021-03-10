@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mariadb
+  namespace: wp
+  labels:
+    type: local
+spec:
+  storageClassName: local-storage # creaet own storage-class
+  persistentVolumeReclaimPolicy: Retain
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/bitnami/mariadb"
+  # local:
+  #   path: /mnt/bitnami/data
+  # nodeAffinity:
+  #   required:
+  #     nodeSelectorTerms:
+  #       - matchExpressions:
+  #         - key: app.kubernetes.io/name
+  #           operator: In
+  #           values:
+  #             - wordpress

@@ -2,11 +2,11 @@
 ## Please, note that this will override the image parameters, including dependencies, configured to use the global value
 ## Current available global Docker image parameters: imageRegistry and imagePullSecrets
 ##
-# global:
+global:
 #   imageRegistry: myRegistryName
 #   imagePullSecrets:
 #     - myRegistryKeySecretName
-#   storageClass: myStorageClass
+  storageClass: local-storage
 
 ## Bitnami WordPress image version
 ## ref: https://hub.docker.com/r/bitnami/wordpress/tags/
@@ -28,15 +28,15 @@ image:
   #   - myRegistryKeySecretName
   ## Set to true if you would like to see extra information on logs
   ##
-  debug: false
+  debug: true
 
 ## Force target Kubernetes version (using Helm capabilites if not set)
 ##
-kubeVersion:
+# kubeVersion:
 
 ## String to partially override aspnet-core.fullname template (will maintain the release name)
 ##
-# nameOverride:
+nameOverride: "wordpress"
 
 ## String to fully override aspnet-core.fullname template
 ##
@@ -45,6 +45,8 @@ kubeVersion:
 ## Add labels to all the deployed resources
 ##
 commonLabels: {}
+  # labels:
+  #   app: wordpress
 
 ## Add annotations to all the deployed resources
 ##
@@ -80,7 +82,7 @@ wordpressUsername: user
 ## Defaults to a random 10-character alphanumeric string if not set
 ## ref: https://github.com/bitnami/bitnami-docker-wordpress#environment-variables
 ##
-# wordpressPassword:
+wordpressPassword: "123456789"
 
 ## Use existing secret (does not create the WordPress Secret object)
 ## Must contain key `wordpress-secret`
@@ -96,12 +98,12 @@ wordpressEmail: user@example.com
 ## First name
 ## ref: https://github.com/bitnami/bitnami-docker-wordpress#environment-variables
 ##
-wordpressFirstName: FirstName
+wordpressFirstName: Mark
 
 ## Last name
 ## ref: https://github.com/bitnami/bitnami-docker-wordpress#environment-variables
 ##
-wordpressLastName: LastName
+wordpressLastName: Kriz
 
 ## Blog name
 ## ref: https://github.com/bitnami/bitnami-docker-wordpress#environment-variables
@@ -234,7 +236,7 @@ sidecars: {}
 ##    imagePullPolicy: Always
 ##    command: ['sh', '-c', 'copy themes and plugins from git and push to /bitnami/wordpress/wp-content. Should work with extraVolumeMounts and extraVolumes']
 ##
-initContainers: {}
+initContainers: []
 
 ## Pod Labels
 ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
@@ -262,23 +264,30 @@ podAntiAffinityPreset: soft
 ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
 ## Allowed values: soft, hard
 ##
+# required:
+#   nodeSelectorTerms:
+#   - matchExpressions:
+#     - key: kubernetes.io/hostname
+#       operator: In
+#       values:
 nodeAffinityPreset:
   ## Node affinity type
   ## Allowed values: soft, hard
   ##
-  type: ""
+  type: soft
   ## Node label key to match
   ## E.g.
   ## key: "kubernetes.io/e2e-az-name"
   ##
-  key: ""
+  key: "app.kubernetes.io/name"
   ## Node label values to match
   ## E.g.
   ## values:
   ##   - e2e-az1
   ##   - e2e-az2
   ##
-  values: []
+  values:
+    - wordpress
 
 ## Affinity for pod assignment
 ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
@@ -310,14 +319,14 @@ resources:
 ##
 podSecurityContext:
   enabled: true
-  fsGroup: 1001
+  fsGroup: 0
 
 ## Configure Container Security Context (only main container)
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
 ##
 containerSecurityContext:
   enabled: true
-  runAsUser: 1001
+  runAsUser: 0
 
 ## WordPress containers' liveness and readiness probes.
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
@@ -380,7 +389,7 @@ containerPorts:
 ## For minikube, set this to NodePort, elsewhere use LoadBalancer or ClusterIP
 ##
 service:
-  type: LoadBalancer
+  type: ClusterIP
   ## HTTP Port
   ##
   port: 80
@@ -402,7 +411,7 @@ service:
     https: ""
   ## Service clusterIP.
   ##
-  # clusterIP: None
+  clusterIP: None
   ## loadBalancerIP for the SuiteCRM Service (optional, cloud specific)
   ## ref: http://kubernetes.io/docs/user-guide/services/#type-loadbalancer
   ##
@@ -432,7 +441,7 @@ service:
 ingress:
   ## Set to true to enable ingress record generation
   ##
-  enabled: false
+  enabled: true
 
   ## Set this to true in order to add the corresponding annotations for cert-manager
   ##
@@ -444,16 +453,16 @@ ingress:
 
   ## Override API Version (automatically detected if not set)
   ##
-  apiVersion:
+  # apiVersion:
 
   ## When the ingress is enabled, a host pointing to this will be created
   ##
-  hostname: wordpress.local
+  hostname: wordpress.app.local
 
   ## The Path to WordPress. You may need to set this to '/*' in order to use this
   ## with ALB ingress controllers.
   ##
-  path: /
+  path: '/*'
 
   ## Ingress annotations done as key:value pairs
   ## For a full list of possible ingress annotations, please see
@@ -461,7 +470,8 @@ ingress:
   ##
   ## If certManager is set to true, annotation kubernetes.io/tls-acme: "true" will automatically be set
   ##
-  annotations: {}
+  annotations:
+    kubernetes.io/ingress.class: nginx
 
   ## Enable TLS configuration for the hostname defined at ingress.hostname parameter
   ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.ingress.hostname }}
@@ -521,11 +531,11 @@ persistence:
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
   ##
-  # storageClass: "-"
+  storageClass: local-storage
   ##
   ## If you want to reuse an existing claim, you can pass the name of the PVC using
   ## the existingClaim variable
-  # existingClaim: your-claim
+  # existingClaim: wordpress
   accessMode: ReadWriteOnce
   size: 10Gi
   ## Custom dataSource
@@ -638,8 +648,66 @@ mariadb:
     ##
     database: bitnami_wordpress
     username: bn_wordpress
-    password: ""
+    password: "123456789"
   primary:
+    initContainers: []
+    nodeAffinityPreset:
+      type: "soft"
+      key: "app.kubernetes.io/name"
+      values:
+        - wordpress
+    extraEnvVars:
+      - name: ALLOW_EMPTY_PASSWORD
+        value: "yes"
+      - name: BITNAMI_DEBUG
+        value: "true"
+      - name: MARIADB_ROOT_USER
+        value: "root"
+      - name: MARIADB_ROOT_PASSWORD
+        value: ""
+    configuration: |-
+      [mysqld]
+      skip-name-resolve
+      explicit_defaults_for_timestamp
+      basedir=/opt/bitnami/mariadb
+      plugin_dir=/opt/bitnami/mariadb/plugin
+      port=3306
+      socket=/opt/bitnami/mariadb/tmp/mysql.sock
+      tmpdir=/opt/bitnami/mariadb/tmp
+      max_allowed_packet=16M
+      bind-address=0.0.0.0
+      pid-file=/opt/bitnami/mariadb/tmp/mysqld.pid
+      log-error=/opt/bitnami/mariadb/logs/mysqld.log
+      character-set-server=UTF8
+      collation-server=utf8_general_ci
+      plugin-load-add=auth_socket.so
+
+      [client]
+      port=3306
+      socket=/opt/bitnami/mariadb/tmp/mysql.sock
+      default-character-set=UTF8
+      plugin_dir=/opt/bitnami/mariadb/plugin
+
+      [manager]
+      port=3306
+      socket=/opt/bitnami/mariadb/tmp/mysql.sock
+      pid-file=/opt/bitnami/mariadb/tmp/mysqld.pid
+
+    # - name: mariadb-create-directory-structure
+    #   image: busybox
+    #   command:
+    #     [
+    #       "sh",
+    #       "-c",
+    #       "/bin/mkdir -p /bitnami/mariadb/data && /bin/chmod -R 777 /bitnami/mariadb",
+    #     ]
+    #   volumeMounts:
+    #     - name: mariadb-data
+    #       mountPath: /bitnami
+    podSecurityContext:
+      enabled: true
+      fsGroup: 0
+
     ## Enable persistence using Persistent Volume Claims
     ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
     ##
@@ -652,10 +720,16 @@ mariadb:
       ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
       ##   GKE, AWS & OpenStack)
       ##
-      # storageClass: "-"
+      storageClass: local-storage
+      # existingClaim: wordpress
       accessModes:
         - ReadWriteOnce
-      size: 8Gi
+      size: 10Gi
+    volumePermission:
+      enabled: true
+    service:
+      clusterIP: None
+    debug: true
 
 ##
 ## External Database Configuration
@@ -710,7 +784,7 @@ customPostInitScripts: {}
 ## volumePermissions: Change the owner of the persist volume mountpoint to RunAsUser:fsGroup
 ##
 volumePermissions:
-  enabled: false
+  enabled: true
   image:
     registry: docker.io
     repository: bitnami/bitnami-shell
