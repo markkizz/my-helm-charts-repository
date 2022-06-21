@@ -1,0 +1,58 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: customer-story
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: customer-story
+  template:
+    metadata:
+      labels:
+        app: customer-story
+    spec:
+      containers:
+        - name: customer-story
+          image: nipacloud/customerportal:stroybook
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: story-port
+              containerPort: 8080
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-story-service
+spec:
+  selector:
+    app: customer-storybook
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: story-port
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: customer-storybook
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-thaiopenstack"
+spec:
+  tls:
+  - hosts:
+    - "customerstory.play.thaiopenstack.com"
+    secretName: tls-secret
+  rules:
+  - host: "customerstory.play.thaiopenstack.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: customer-story-service
+            port:
+              number: 80
