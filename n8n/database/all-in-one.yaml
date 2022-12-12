@@ -1,13 +1,13 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: n8n
----
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: n8n
+# ---
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql-n8n
-  namespace: n8n
+  namespace: play
 spec:
   clusterIP: None
   ports:
@@ -19,7 +19,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql-n8n
-  namespace: n8n
+  namespace: play
 spec:
   selector:
     matchLabels:
@@ -42,37 +42,38 @@ spec:
           name: mysql-n8n
         volumeMounts:
         - name: mysql-persistent-storage
-          mountPath: /var/lib/mysql
+          mountPath: /home/sql/mysql
       volumes:
       - name: mysql-persistent-storage
         persistentVolumeClaim:
-          claimName: mysql-n8n
+          claimName: mysql-n8n-pvc
 ---
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: mysql-n8n
-  namespace: n8n
-  labels:
-    type: local
-spec:
-  storageClassName: local-storage
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/mnt/data"
----
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: mysql-n8n-pv
+#   namespace: play
+#   labels:
+#     type: n8n
+# spec:
+#   storageClassName: longhorn
+#   capacity:
+#     storage: 10Gi
+#   accessModes:
+#     - ReadWriteOnce
+#   hostPath:
+#     path: "/mnt/data"
+# ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mysql-n8n
-  namespace: n8n
+  name: mysql-n8n-pvc
+  namespace: play
 spec:
-  storageClassName: local-storage
+  storageClassName: longhorn
+  # storageClassName: local-storage
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 10Gi
