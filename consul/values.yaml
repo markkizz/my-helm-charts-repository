@@ -1,0 +1,17 @@
+server:
+  storageClass: longhorn
+
+ui:
+  ingress:
+    enabled: true
+    annotations: |
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      cert-manager.io/cluster-issuer: "letsencrypt-thaiopenstack"
+    tls:
+      - hosts:
+        - "consul.play.thaiopenstack.com"
+        secretName: tls-secret
+    hosts:
+      - host: "consul.play.thaiopenstack.com"
+        paths:
+          - /
