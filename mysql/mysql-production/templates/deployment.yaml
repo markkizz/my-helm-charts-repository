@@ -58,7 +58,11 @@ spec:
         command:  ["rm", "-fr", "/var/lib/mysql/lost+found"]
         volumeMounts:
         - name: data
+          {{- if .Values.persistence.mountPath }}
+          mountPath: {{ .Values.persistence.mountPath }}
+          {{- else }}
           mountPath: /var/lib/mysql
+          {{- end }}
           {{- if .Values.persistence.subPath }}
           subPath: {{ .Values.persistence.subPath }}
           {{- end }}
@@ -160,7 +164,11 @@ spec:
           failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
         volumeMounts:
         - name: data
+          {{- if .Values.persistence.mountPath }}
+          mountPath: {{ .Values.persistence.mountPath }}
+          {{- else }}
           mountPath: /var/lib/mysql
+          {{- end }}
           {{- if .Values.persistence.subPath }}
           subPath: {{ .Values.persistence.subPath }}
           {{- end }}
