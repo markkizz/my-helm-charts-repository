@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-thaiopenstack"
+spec:
+  tls:
+  - hosts:
+    - "argocd.play.thaiopenstack.com"
+    secretName: tls-secret
+  rules:
+  - host: "argocd.play.thaiopenstack.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argo-cd-argocd-server
+            port:
+              name: https

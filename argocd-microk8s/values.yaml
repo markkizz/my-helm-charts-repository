@@ -1,0 +1,25 @@
+server:
+  extraArgs:
+    - '--insecure'
+  ingress:
+    enable: true
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      cert-manager.io/cluster-issuer: "letsencrypt-thaiopenstack"
+    hosts:
+      - argocd.play.thaiopenstack.com
+    paths:
+      - /
+    pathType: Prefix
+    extraPaths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argo-cd-argocd-server
+            port:
+              name: http
+    tls:
+      - secretName: tls-secret
+        hosts:
+          - argocd.play.thaiopenstack.com
