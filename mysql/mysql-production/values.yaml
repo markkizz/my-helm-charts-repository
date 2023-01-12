@@ -108,7 +108,7 @@ persistence:
   ##
   storageClass: longhorn
   accessMode: ReadWriteOnce
-  size: 10Gi
+  size: 80Gi
   annotations: {}
   mountPath: /home/sql/mysql
 
@@ -128,8 +128,8 @@ securityContext:
 ##
 resources:
   requests:
-    memory: 256Mi
-    cpu: 100m
+    memory: 1024Mi
+    cpu: 400m
 
 # Custom mysql configuration files path
 configurationFilesPath: /etc/mysql/conf.d/

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: regcred
+  namespace: play
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5wbGF5LnRoYWlvcGVuc3RhY2suY29tIjp7InVzZXJuYW1lIjoiZG9ja2VyIiwicGFzc3dvcmQiOiJEZXZQbGF5Z3JvdW5kQDIwMjIiLCJlbWFpbCI6ImRldkBuaXBhLmNsb3VkIiwiYXV0aCI6IlpHOWphMlZ5T2tSbGRsQnNZWGxuY205MWJtUkFNakF5TWc9PSJ9fX0=
+type: kubernetes.io/dockerconfigjson

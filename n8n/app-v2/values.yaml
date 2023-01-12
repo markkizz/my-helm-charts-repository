@@ -11,7 +11,7 @@ config: # Dict with all n8n json config options
   database:
     type: mysqldb
     mysqldb:
-      host: 10.152.183.193
+      host: 10.152.183.222
       port: 3306
 secret: # Dict with all n8n json config options, unlike config the values here will end up in a secret.
   database:
@@ -164,7 +164,6 @@ image:
   tag: ""
 
 imagePullSecrets: []
-nameOverride: ""
 fullnameOverride: ""
 
 serviceAccount:

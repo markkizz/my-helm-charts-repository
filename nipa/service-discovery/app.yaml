@@ -1,0 +1,131 @@
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: n8n
+# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-discovery
+  namespace: play
+spec:
+  selector:
+    matchLabels:
+      app: service-discovery
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: service-discovery
+    spec:
+      containers:
+      - image: registry.play.thaiopenstack.com/service-discovery:0.1-rc0.2
+        name: service-discovery
+        # command:
+        # - yarn
+        # - app
+        env:
+        - name: PORT
+          value: "3000"
+        - name: DATABASE__DATABASE
+          value: discovery
+        - name: DATABASE__DRIVER
+          value: mysql2
+        - name: DATABASE__HOST
+          value: "10.152.183.193"
+        - name: DATABASE__USER
+          value: root
+        - name: DATABASE__PASSWORD
+          value: password
+        - name: DATABASE__POOL_MAX
+          value: "5"
+        - name: DATABASE__POOL_MIN
+          value: "2"
+        - name: DATABASE__PORT
+          value: "3306"
+        - name: DATABASE__TIMEOUT
+          value: "6000"
+        ports:
+        - containerPort: 3000
+          name: discovery-port
+        imagePullPolicy: Always
+      imagePullSecrets:
+        - name: regcred
+        # volumeMounts:
+        # - name: mysql-persistent-storage
+        #   mountPath: /home/sql/mysql
+      # volumes:
+      # - name: mysql-persistent-storage
+      #   persistentVolumeClaim:
+      #     claimName: mysql-n8n-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-discovery-svc
+  namespace: play
+spec:
+  selector:
+    app: service-discovery
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: discovery-port
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: service-discovery-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-thaiopenstack"
+spec:
+  tls:
+  - hosts:
+    - "discovery.play.thaiopenstack.com"
+    secretName: tls-secret
+  rules:
+  - host: "discovery.play.thaiopenstack.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service-discovery-svc
+            port:
+              number: 80
+              # name: https
+---
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: mysql-n8n-pv
+#   namespace: play
+#   labels:
+#     type: n8n
+# spec:
+#   storageClassName: longhorn
+#   capacity:
+#     storage: 10Gi
+#   accessModes:
+#     - ReadWriteOnce
+#   hostPath:
+#     path: "/mnt/data"
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: mysql-n8n-pvc
+#   namespace: play
+# spec:
+#   storageClassName: longhorn
+#   # storageClassName: local-storage
+#   accessModes:
+#     - ReadWriteMany
+#   resources:
+#     requests:
+#       storage: 10Gi
+
+
