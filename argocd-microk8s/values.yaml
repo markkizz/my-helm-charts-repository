@@ -18,8 +18,9 @@ server:
           service:
             name: argo-cd-argocd-server
             port:
-              name: http
+              name: https
     tls:
       - secretName: tls-secret
         hosts:
           - argocd.play.thaiopenstack.com
+    https: true
